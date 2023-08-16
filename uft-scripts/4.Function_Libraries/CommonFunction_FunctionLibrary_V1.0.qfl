@@ -1,0 +1,163 @@
+﻿'========================================================================================================
+'Function Library Name : CommonFunction_FunctionLibrary_V1.0
+'Associated Repository : N/A
+'Description : This is the function library for all data handling from storing, processing and retrieving data
+'========================================================================================================
+
+'========================================================================================================
+'Function Name: openBrowserURL
+'Date created: 01/08/2022
+'Date Maintained: 01/08/2022
+'Purpose: standard open browser using browser type and URL specified.
+'Restriction: browser supported iexplore.exe (Internet Explorer), firefox.exe (Firefox), chrome.exe (Chrome) & msedge.exe (Edge)
+'========================================================================================================
+Function openBrowserURL(browsertype,urllink)
+	systemutil.Run browsertype, urllink
+End Function
+
+'========================================================================================================
+'Function Name: closeBrowserURL
+'Date created: 01/08/2022
+'Date Maintained: 01/08/2022
+'Purpose: standard open browser using browser type and URL specified.
+'Restriction: browser supported iexplore.exe (Internet Explorer), firefox.exe (Firefox), chrome.exe (Chrome) & msedge.exe (Edge)
+'========================================================================================================
+Function closeBrowser(browsertype)
+	SystemUtil.CloseProcessByName(browsertype)
+End Function
+
+'========================================================================================================
+'Function Name: storeDataToGlobalSheet
+'Date created: 02/08/2022
+'Date Maintained: 03/08/2022
+'Purpose: store data by creating new column and storing first data under it.
+'Restriction: global sheet should be created by default
+'========================================================================================================
+
+Function storeDataToGlobalSheet(parametername,parameterdata)
+'get all row count
+'Dim columncount = DataTable.GetSheet(dtGlobalSheet).GetParameterCount
+Dim columncount 
+	columncount = DataTable.GetSheet("Global").GetParameterCount
+
+msgbox columncount 'show 9
+
+Dim columnexist
+	columnexist = 0
+'check if column exist
+For Iterator = 1 To columncount Step 1
+	If datatable.GetSheet("Global").GetParameter(Iterator).name=paramatername Then
+		columnexist = 1
+		Exit For
+	End If
+	msgbox datatable.GetSheet("Global").GetParameter(Iterator).name
+Next
+
+'if exist do nothing but if does not exist then add a new column
+	If columnexist = 0 Then
+		DataTable.GetSheet(1).AddParameter parametername,parameterdata
+'add data if column exist
+	ElseIf columnexist = 1 Then
+		DataTable.Value(parametername,1)= parameterdata
+	End If
+
+	
+	
+End Function
+
+'========================================================================================================
+'Function Name: sendKeyUsingShell
+'Date created: 02/08/2022
+'Date Maintained: 03/08/2022
+'Purpose: send keyboard by initializing winshell then setting winshell to nothing for next use
+'Restriction: https://admhelp.microfocus.com/uft/en/all/VBScript/Content/html/4b032417-ebda-4d30-88a4-2b56c24affdd.htm
+'========================================================================================================
+Function sendKeyUsingShell(keyboardkeys)
+	Set WinShell = CreateObject("WScript.Shell")
+	WinShell.SendKeys keyboardkeys
+	Set WinShell = Nothing
+End Function
+
+'========================================================================================================
+'Function Name: setUserSimulation
+'Date created: 02/08/2022
+'Date Maintained: 03/08/2022
+'Purpose: send user simulation or replay type during runtime
+'Restriction: 1 for event or no simulation, 2 for mouse action. Caution need to change then reset back to default after use
+'========================================================================================================
+Function setUserSimulation(replaytype)
+	Setting.WebPackage("ReplayType")=replaytype
+End Function
+
+'========================================================================================================
+'Function Name: checkRunIteration
+'Date created: 04/08/2022
+'Date Maintained: 04/08/2022
+'Purpose: use to check whether the test case need to be run or not. If not directly exit test iteration.
+'Restriction: must be used in Precondition Action to ensure the iteration is skipped from the beginning
+'========================================================================================================
+Function checkRunIteration
+	Select Case DataTable("Run", "1.Precondition")
+	'Select Case DataTable("Run", "dtLocalSheet")
+		Case "No"
+			ExitTestIteration
+	End Select	
+End Function
+
+'========================================================================================================
+'Function Name: 
+'Date created: 
+'Date Maintained: 
+'Purpose: 
+'Restriction: 
+'========================================================================================================
+Function resultCapture(stepName, stepDetails, stepStatus, testObj)
+'	Reporter.ReportEvent EventStatus, ReportStepName, Details [, ImageFilePath]
+	imgName = "Result_"& Day(Now)&""& Month(Now)&""& Year(Now)&""& Hour(Now)&""& Minute(Now)&""& Second(Now)&".png"
+	On error resume next
+		If NOT testObj.Exist Then
+			reporter.ReportEvent micWarning, "Capture", "Failed to capture result"
+			Exit Function
+		End If
+		If stepStatus = "Fail" Then	
+			testObj.CaptureBitmap imgName, True
+			reporter.ReportEvent micFail, stepName, stepDetails, imgName
+		ElseIf stepStatus = "Pass" Then
+			testObj.CaptureBitmap imgName, True
+			reporter.ReportEvent micDone, stepName, stepDetails, imgName
+		End If
+	On error goto 0
+End Function
+
+'========================================================================================================
+'Function Name: 
+'Date created: 
+'Date Maintained: 
+'Purpose: 
+'Restriction: 
+'========================================================================================================
+Function WriteResulttoExcel(ID, TestResult, SheetPath)
+  'Creating the Excel Object
+  set objExcel = createobject("excel.application")
+  'Add New Workbook
+ Set WB=objExcel.Workbooks.Add(SheetPath)
+  'Creating the Workbooks object
+  set objWB = objExcel.workbooks.open (SheetPath)
+  'Creating the sheet object
+  set objsheet = objwb.worksheets(1)
+  ' Write test results to excel sheet
+  rws=objsheet.UsedRange.Rows.count
+  objsheet.cells(1,rws+1).Value= ID
+  objsheet.cells(2,rws+1).Value= TestResult
+  'Saving the workbook after changes
+  objWb.save
+  'objWb.saveas SheetPath & "\result" & Day(Now)&""& Month(Now)&""& Year(Now)&""& Hour(Now)&""& Minute(Now)&""& Second(Now)&".xlxs"
+  'closing the workbook
+  objWB.close
+ 'Quit the Excel and destroying the Excel object
+  objExcel.Quit
+  set objExcel=nothing
+End Function
+
+
+
